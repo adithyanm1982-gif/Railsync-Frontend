@@ -148,7 +148,7 @@ export function DashboardPage() {
             </div>
           )}
 
-          {trainsQuery.data && <TrainScheduleTable trains={trainsQuery.data.trains} />}
+          {trainsQuery.data && <TrainScheduleTable trains={trainsQuery.data.trains ?? []} />}
         </div>
       </Card>
     </div>

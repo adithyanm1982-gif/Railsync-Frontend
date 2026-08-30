@@ -8,7 +8,7 @@ const DEPARTMENT_COLORS: Record<string, string> = {
 };
 
 /** Table for the real GET /api/schedules/ feed -- final CP-SAT-selected block assignments. */
-export function ScheduleTable({ schedules }: { schedules: RealScheduleEntry[] }) {
+export function ScheduleTable({ schedules = [] }: { schedules?: RealScheduleEntry[] }) {
   if (schedules.length === 0) {
     return <p className="text-sm text-slate-500 py-6 text-center">No schedules for this filter.</p>;
   }

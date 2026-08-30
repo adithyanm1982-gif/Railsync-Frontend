@@ -17,7 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
 const PAGE_SIZE = 20;
 
 /** Table for the real train_movements dataset -- train no/type, real entry/exit times, corridor, direction, status. */
-export function TrainScheduleTable({ trains }: { trains: RealTrainMovement[] }) {
+export function TrainScheduleTable({ trains = [] }: { trains?: RealTrainMovement[] }) {
   const [page, setPage] = useState(0);
 
   if (trains.length === 0) {
