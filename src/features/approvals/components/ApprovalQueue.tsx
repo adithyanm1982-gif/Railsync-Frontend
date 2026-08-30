@@ -11,6 +11,16 @@ const DEPARTMENT_COLORS: Record<string, string> = {
   Traction: '#F59E0B',
 };
 
+export type SortMode = 'priority' | 'urgency' | 'overdue';
+
+const URGENCY_RANK: Record<string, number> = {
+  IMMEDIATE: 0,
+  HIGH: 1,
+  MEDIUM: 2,
+  NORMAL: 3,
+  LOW: 4,
+};
+
 interface ApprovalCardProps {
   task: RealTask;
 }
@@ -75,14 +85,23 @@ export function ApprovalCard({ task }: ApprovalCardProps) {
   );
 }
 
-export function ApprovalQueue({ tasks }: { tasks: RealTask[] }) {
+export function ApprovalQueue({ tasks, sortBy = 'priority' }: { tasks: RealTask[]; sortBy?: SortMode }) {
   if (tasks.length === 0) {
     return <p className="text-sm text-slate-500 py-6 text-center">No items awaiting approval.</p>;
   }
 
+  const sorted = [...tasks].sort((a, b) => {
+    if (sortBy === 'urgency') return URGENCY_RANK[a.urgency] - URGENCY_RANK[b.urgency];
+    if (sortBy === 'overdue') return b.overdue_days - a.overdue_days;
+    // 'priority' -- highest priority score first, using the same real formula as the Priorities tab
+    const scoreA = computeRealPriorityScore(priorityInputsFromTask(a));
+    const scoreB = computeRealPriorityScore(priorityInputsFromTask(b));
+    return scoreB - scoreA;
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {tasks.map((task) => (
+      {sorted.map((task) => (
         <ApprovalCard key={task.request_id} task={task} />
       ))}
     </div>

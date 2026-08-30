@@ -1,8 +1,16 @@
 import { useState } from 'react';
+import clsx from 'clsx';
 import { useTasksLive } from '@/features/requests/hooks/useTasksLive';
-import { ApprovalQueue } from '@/features/approvals/components/ApprovalQueue';
+import { ApprovalQueue, SortMode } from '@/features/approvals/components/ApprovalQueue';
 import { LiveDataPanel } from '@/shared/components/ui/LiveDataPanel';
 import { Card, CardHeader, CardTitle } from '@/shared/components/ui/Card';
+import { ArrowUpDown } from 'lucide-react';
+
+const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: 'priority', label: 'Priority' },
+  { value: 'urgency', label: 'Urgency' },
+  { value: 'overdue', label: 'Overdue Days' },
+];
 
 /**
  * "Approvals" tab: the controller's action desk. Every request from
@@ -17,6 +25,7 @@ import { Card, CardHeader, CardTitle } from '@/shared/components/ui/Card';
  */
 export function ApprovalPage() {
   const [department, setDepartment] = useState('');
+  const [sortBy, setSortBy] = useState<SortMode>('priority');
   const query = useTasksLive({ department: department || undefined });
 
   return (
@@ -25,7 +34,7 @@ export function ApprovalPage() {
         <CardTitle>Approval Desk {query.data ? `(${query.data.count})` : ''}</CardTitle>
       </CardHeader>
       <div className="space-y-3">
-        <div className="flex items-end gap-3">
+        <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1">
             <label className="text-[10px] text-slate-500 uppercase tracking-wide">Department</label>
             <select
@@ -39,9 +48,36 @@ export function ApprovalPage() {
               <option value="Traction">Traction</option>
             </select>
           </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] text-slate-500 uppercase tracking-wide flex items-center gap-1">
+              <ArrowUpDown size={10} />
+              Sort by
+            </label>
+            <div className="flex gap-1 rounded-md bg-slate-900/60 p-1 border border-slate-700">
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSortBy(opt.value)}
+                  className={clsx(
+                    'rounded px-2.5 py-1 text-xs font-medium transition-colors',
+                    sortBy === opt.value
+                      ? 'bg-dept-engineering text-slate-950'
+                      : 'text-slate-400 hover:text-slate-200'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {query.isLoading || query.isError ? <LiveDataPanel query={query} /> : <ApprovalQueue tasks={query.data?.tasks ?? []} />}
+        {query.isLoading || query.isError ? (
+          <LiveDataPanel query={query} />
+        ) : (
+          <ApprovalQueue tasks={query.data?.tasks ?? []} sortBy={sortBy} />
+        )}
       </div>
     </Card>
   );
