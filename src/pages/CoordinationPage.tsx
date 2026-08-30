@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useSchedules } from '@/features/schedules/hooks/useSchedules';
+import { ScheduleTable } from '@/features/schedules/components/ScheduleTable';
 import { PlanningDateSelector } from '@/shared/components/ui/PlanningDateSelector';
-import { LiveDataPanel } from '@/shared/components/ui/LiveDataPanel';
 import { Card, CardHeader, CardTitle } from '@/shared/components/ui/Card';
 import { MaintenanceHoverPopover } from '@/features/simulation/components/MaintenanceHoverPopover';
 import { REAL_SCHEDULE_ENTRIES } from '@/features/simulation/data/realSchedules';
 import { RealScheduleEntry } from '@/features/simulation/types';
+import { RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 /**
  * "Coordination" tab per backend spec: opportunities where multiple
@@ -84,7 +85,39 @@ export function CoordinationPage() {
             onRefresh={() => query.refetch()}
             isFetching={query.isFetching}
           />
-          <LiveDataPanel query={query} />
+
+          {query.isLoading && (
+            <div className="flex items-center gap-2 py-8 text-sm text-slate-500">
+              <RefreshCw size={14} className="animate-spin" />
+              Fetching live data — the backend may be cold-starting (can take up to ~90s)...
+            </div>
+          )}
+
+          {query.isError && (
+            <div className="flex items-start gap-2 rounded-lg border border-dept-snt/40 bg-dept-snt/10 p-3 text-sm text-dept-snt">
+              <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+              <p>{(query.error as Error)?.message ?? 'Could not reach the backend.'}</p>
+            </div>
+          )}
+
+          {query.data && (
+            <>
+              <div
+                className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${
+                  query.data.safety_valid
+                    ? 'border-signal-green/40 bg-signal-green/10 text-signal-green'
+                    : 'border-dept-snt/40 bg-dept-snt/10 text-dept-snt'
+                }`}
+              >
+                {query.data.safety_valid ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+                <span>
+                  {query.data.count} schedules · {query.data.planning_date} · Corridor {query.data.corridor_id} ·{' '}
+                  {query.data.safety_valid ? 'Safety valid' : 'Safety issues detected'}
+                </span>
+              </div>
+              <ScheduleTable schedules={query.data.schedules} />
+            </>
+          )}
         </div>
       </Card>
 
