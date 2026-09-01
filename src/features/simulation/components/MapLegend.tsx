@@ -12,7 +12,7 @@ const DEPARTMENT_ITEMS = [
 
 export function MapLegend() {
   return (
-    <div className="absolute left-4 top-4 panel-surface rounded-lg p-3 text-xs space-y-2.5 w-56">
+    <div className="panel-surface rounded-lg p-3 text-xs space-y-2.5 w-56">
       <div>
         <p className="text-slate-300 font-semibold mb-1.5">Track Occupancy</p>
         {OCCUPANCY_ITEMS.map((item) => (

@@ -20,7 +20,7 @@ const STATUS_COLORS: Record<string, string> = {
  */
 export function FleetMonitorPanel({ trains, positions }: FleetMonitorPanelProps) {
   return (
-    <div className="absolute left-4 bottom-24 panel-surface rounded-lg p-3 text-xs w-72">
+    <div className="panel-surface rounded-lg p-3 text-xs w-72">
       <p className="text-slate-300 font-semibold mb-2">Active Fleet Monitor</p>
       <table className="w-full">
         <thead>
