@@ -7,7 +7,7 @@ import axios from 'axios';
  * e.g. http://localhost:8000
  */
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'https://railway-production-b1f9.up.railway.app',
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'https://railway-production-c761.up.railway.app',
   timeout: 90_000, // Render free-tier cold start can be 50s+ (their own dashboard says so) -- give real headroom
   headers: {
     'Content-Type': 'application/json',
