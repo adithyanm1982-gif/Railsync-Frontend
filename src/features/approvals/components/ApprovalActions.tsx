@@ -1,29 +1,32 @@
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/Button';
-import { useSubmitApproval } from '../hooks/useSubmitApproval';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Check, X, RefreshCw } from 'lucide-react';
+import { useLocalRequestStore } from '@/features/requests/local/localRequestStore';
+import { Check, X } from 'lucide-react';
 
 interface ApprovalActionsProps {
   requestId: string;
   onDone?: (approved: boolean) => void;
 }
 
+/**
+ * Acts directly on the local request queue (useLocalRequestStore),
+ * not the live backend -- these are the 50 locally-raised requests
+ * from Engineering/S&T/Traction, which don't exist in the real
+ * backend's database (it has no create endpoint), so there's nothing
+ * for a real POST /api/approvals/ call to meaningfully act on here.
+ */
 export function ApprovalActions({ requestId, onDone }: ApprovalActionsProps) {
   const { user } = useAuth();
   const [comments, setComments] = useState('');
-  const mutation = useSubmitApproval();
+  const approveRequest = useLocalRequestStore((s) => s.approveRequest);
+  const rejectRequest = useLocalRequestStore((s) => s.rejectRequest);
 
   function handleDecision(approved: boolean) {
-    mutation.mutate(
-      {
-        request_id: requestId,
-        approved,
-        approved_by: user?.name,
-        comments: comments || undefined,
-      },
-      { onSuccess: () => onDone?.(approved) }
-    );
+    const approvedBy = user?.name ?? 'Controller';
+    if (approved) approveRequest(requestId, approvedBy, comments || undefined);
+    else rejectRequest(requestId, approvedBy, comments || undefined);
+    onDone?.(approved);
   }
 
   return (
@@ -35,29 +38,15 @@ export function ApprovalActions({ requestId, onDone }: ApprovalActionsProps) {
         className="w-full rounded-md bg-slate-900/60 border border-slate-700 px-2.5 py-1.5 text-xs"
       />
       <div className="flex gap-2">
-        <Button
-          variant="success"
-          onClick={() => handleDecision(true)}
-          disabled={mutation.isPending}
-          className="flex items-center gap-1.5"
-        >
-          {mutation.isPending ? <RefreshCw size={13} className="animate-spin" /> : <Check size={13} />}
+        <Button variant="success" onClick={() => handleDecision(true)} className="flex items-center gap-1.5">
+          <Check size={13} />
           Approve
         </Button>
-        <Button
-          variant="danger"
-          onClick={() => handleDecision(false)}
-          disabled={mutation.isPending}
-          className="flex items-center gap-1.5"
-        >
+        <Button variant="danger" onClick={() => handleDecision(false)} className="flex items-center gap-1.5">
           <X size={13} />
           Reject
         </Button>
       </div>
-      {mutation.isError && (
-        <p className="text-xs text-dept-snt">{(mutation.error as Error)?.message ?? 'Approval submission failed.'}</p>
-      )}
-      {mutation.isSuccess && <p className="text-xs text-signal-green">Decision submitted.</p>}
     </div>
   );
 }

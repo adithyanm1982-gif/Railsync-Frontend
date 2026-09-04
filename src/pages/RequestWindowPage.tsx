@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { useTasksLive } from '@/features/requests/hooks/useTasksLive';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useLocalRequestStore } from '@/features/requests/local/localRequestStore';
+import { RaiseRequestForm } from '@/features/requests/local/RaiseRequestForm';
 import { RealTaskList } from '@/features/requests/components/RealTaskList';
 import { RealRequestFilterBar, RealFilters } from '@/features/requests/components/RealRequestFilterBar';
-import { LiveDataPanel } from '@/shared/components/ui/LiveDataPanel';
 import { Card, CardHeader, CardTitle } from '@/shared/components/ui/Card';
 
 const DEFAULT_FILTERS: RealFilters = {
@@ -13,24 +14,41 @@ const DEFAULT_FILTERS: RealFilters = {
 };
 
 /**
- * "Requests" tab: the real GET /api/tasks/ feed (420 department
- * requests), filterable by department/corridor/urgency/overdue-days.
- * No POST/create route exists on the backend yet -- Engineering/TRD/
- * S&T departments raise requests through their own systems that feed
- * this dataset; this tab is a live read/browse view of it.
+ * "Requests" tab, role-gated:
+ * - Engineering / S&T / Traction: ONLY a raise-request form. They
+ *   cannot see other departments' requests, or even their own past
+ *   ones, in this tab -- raising is their whole job here.
+ * - Section Controller: ONLY the list of all 50 requests raised by
+ *   the three departments (read-only browse -- decisions happen in
+ *   the Approvals tab). No raise-request form for the Controller;
+ *   they don't request anything themselves.
+ *
+ * Both views read/write the same local request queue
+ * (useLocalRequestStore), so a request raised by a department shows
+ * up in the Controller's list immediately.
  */
 export function RequestWindowPage() {
+  const { user } = useAuth();
+  const allRequests = useLocalRequestStore((s) => s.requests);
+
   const [filters, setFilters] = useState<RealFilters>(DEFAULT_FILTERS);
-  const query = useTasksLive({
-    department: filters.department !== 'ALL' ? filters.department : undefined,
-    corridor_id: filters.corridorId !== 'ALL' ? filters.corridorId : undefined,
-  });
+  const corridorOptions = useMemo(() => Array.from(new Set(allRequests.map((t) => t.corridor_id))).sort(), [allRequests]);
 
-  const tasks = query.data?.tasks ?? [];
-  const corridorOptions = useMemo(() => Array.from(new Set(tasks.map((t) => t.corridor_id))).sort(), [tasks]);
+  if (user?.role !== 'CONTROLLER') {
+    return (
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <CardTitle>Raise Service Request</CardTitle>
+        </CardHeader>
+        <RaiseRequestForm />
+      </Card>
+    );
+  }
 
-  const filtered = tasks.filter((t) => {
+  const filtered = allRequests.filter((t) => {
+    if (filters.department !== 'ALL' && t.department !== filters.department) return false;
     if (filters.urgency !== 'ALL' && t.urgency !== filters.urgency) return false;
+    if (filters.corridorId !== 'ALL' && t.corridor_id !== filters.corridorId) return false;
     if (t.overdue_days < filters.minOverdueDays) return false;
     return true;
   });
@@ -38,11 +56,11 @@ export function RequestWindowPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Department Requests {query.data ? `(${query.data.count})` : ''}</CardTitle>
+        <CardTitle>Requests from Departments ({allRequests.length})</CardTitle>
       </CardHeader>
       <div className="space-y-3">
         <RealRequestFilterBar filters={filters} onChange={setFilters} corridorOptions={corridorOptions} />
-        {query.isLoading || query.isError ? <LiveDataPanel query={query} /> : <RealTaskList tasks={filtered} />}
+        <RealTaskList tasks={filtered} />
       </div>
     </Card>
   );
