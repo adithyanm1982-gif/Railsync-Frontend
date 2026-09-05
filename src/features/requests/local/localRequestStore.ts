@@ -72,7 +72,7 @@ export const useLocalRequestStore = create<LocalRequestState>((set) => ({
         criticality: Math.round(Math.min(100, urgencyScore + durationFactor)),
         urgency: input.urgency,
         overdue_days: 0,
-        estimated_duration_hours: Math.round(input.estimated_duration_hours * 10) / 10,
+        estimated_duration_hours: Math.round(input.estimated_duration_hours * 100) / 100,
         safety_risk: Math.round(Math.min(100, urgencyScore + durationFactor * 0.8)),
         operational_impact: Math.round(Math.min(100, urgencyScore + durationFactor * 0.6)),
         request_status: 'PENDING',
