@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { UserRole } from '@/features/auth/types';
+import { NotificationBell } from './NotificationBell';
 
 interface NavItem {
   to: string;
@@ -43,7 +44,7 @@ export function Navbar() {
     <nav className="flex items-center justify-between border-b border-slate-800 bg-canvas-panel px-4 py-2.5">
       <div className="flex items-center gap-6">
         <span className="text-sm font-bold tracking-wide text-slate-100">
-          CORRIDOR MIND <span className="text-dept-engineering">AI</span>
+          RAIL<span className="text-dept-engineering">SYNC</span>
         </span>
         <div className="flex gap-1 flex-wrap">
           {visibleItems.map((item) => (
@@ -65,6 +66,7 @@ export function Navbar() {
 
       {user && (
         <div className="flex items-center gap-3 text-xs text-slate-400">
+          {user.role === 'CONTROLLER' && <NotificationBell />}
           <span>
             {user.name} · <span className="text-slate-300">{user.role}</span>
           </span>
